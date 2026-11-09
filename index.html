@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KineCore Multi-Routine App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0d13; color: #f3f4f6; }
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    circle { transition: stroke-dashoffset 0.15s linear; }
+  </style>
+</head>
+<body class="min-h-screen max-w-md mx-auto flex flex-col bg-slate-950 border-x border-slate-800 shadow-2xl relative select-none">
+
+  <!-- Header & Workout Selector Dropdown -->
+  <header class="px-5 py-4 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20 space-y-3">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="font-display font-bold text-lg text-white tracking-tight">KineCore Athlete</h1>
+        <p class="text-[10px] tracking-widest text-slate-500 uppercase font-semibold" id="header-stats">14 Movements • 60s Work / 20s Rest</p>
+      </div>
+      <button onclick="toggleAudio()" id="audio-btn" class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
+        <i class="fa-solid fa-volume-high" id="audio-icon"></i>
+      </button>
+    </div>
+
+    <!-- Dropdown Selector -->
+    <div class="relative">
+      <label for="routine-select" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Select Workout Routine</label>
+      <div class="relative">
+        <select id="routine-select" onchange="switchRoutine(this.value)" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs font-bold text-white appearance-none cursor-pointer focus:outline-none focus:border-red-500 pr-8 font-display">
+          <!-- Populated dynamically via JS -->
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+          <i class="fa-solid fa-chevron-down text-xs"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Player Stage -->
+  <main class="flex-1 overflow-y-auto px-4 py-4 pb-28 space-y-4">
+    <div id="player-card" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 relative transition-all duration-300">
+      <div class="flex justify-between items-center text-xs">
+        <span id="phase-badge" class="font-bold tracking-wider uppercase text-red-500 font-display">Work Phase</span>
+        <span id="counter-badge" class="text-slate-400 font-bold">1 / 14</span>
+      </div>
+
+      <!-- Main High-Res Image Display -->
+      <div class="w-full aspect-[16/10] bg-white rounded-xl overflow-hidden relative border border-slate-800 flex items-center justify-center">
+        <img id="main-img" src="" alt="Exercise View" class="w-full h-full object-contain p-2">
+        
+        <!-- Rest Overlay -->
+        <div id="rest-hud" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm hidden flex-col items-center justify-center p-4 text-center">
+          <span class="text-xs uppercase tracking-wider font-bold text-emerald-400 font-display mb-1">Rest & Recovery</span>
+          <p class="text-lg font-bold text-white font-display" id="up-next-title">Up Next</p>
+          <p class="text-xs text-slate-400 mt-1" id="up-next-muscles">Target Muscles</p>
+        </div>
+      </div>
+
+      <div>
+        <h2 id="main-title" class="text-xl font-bold font-display text-white">1. Exercise</h2>
+        <p id="main-muscles" class="text-xs text-slate-400 mt-0.5">Target: Muscle Groups</p>
+      </div>
+
+      <!-- Timer & Progress Ring Controls -->
+      <div class="flex items-center justify-between pt-1 border-t border-slate-800/80 mt-1">
+        <div>
+          <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Time Left</span>
+          <span id="timer-text" class="text-4xl font-display font-extrabold text-white">01:00</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="prevEx()" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 text-sm">
+            <i class="fa-solid fa-backward"></i>
+          </button>
+          <button onclick="togglePlay()" id="play-btn" class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-white text-xl shadow-lg shadow-red-950">
+            <i class="fa-solid fa-play ml-0.5" id="play-icon"></i>
+          </button>
+          <button onclick="nextEx()" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 text-sm">
+            <i class="fa-solid fa-forward"></i>
+          </button>
+        </div>
+
+        <div class="relative w-14 h-14 flex items-center justify-center">
+          <svg class="w-full h-full -rotate-90">
+            <circle cx="28" cy="28" r="24" stroke="#1e293b" stroke-width="4" fill="none" />
+            <circle id="ring-progress" cx="28" cy="28" r="24" stroke="#ef4444" stroke-width="4" stroke-dasharray="150.79" stroke-dashoffset="0" fill="none" />
+          </svg>
+          <span id="ring-text" class="absolute text-[11px] font-bold font-display text-slate-300">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Routine Exercise List -->
+    <div class="flex justify-between items-center pt-2">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-display" id="routine-list-title">Routine Exercise Flow</h3>
+      <span class="text-[10px] text-slate-500 font-bold" id="routine-total-duration">Total: 18m 40s</span>
+    </div>
+    <div id="exercise-list" class="space-y-2"></div>
+  </main>
+
+  <script>
+    // Expandable workout registry: Add future routines here
+    const workoutRoutines = [
+      {
+        id: "core-14",
+        title: "Daily Core Routine (14 Exercises)",
+        workDuration: 60,
+        restDuration: 20,
+        exercises: [
+          { id: 1, name: "Dead Bug", file: "1-dead-bug.png", muscles: "Rectus Abdominis, Obliques" },
+          { id: 2, name: "Bear Plank Hold", file: "2-bear-plank.png", muscles: "Transverse Abdominis, Quads, Serratus" },
+          { id: 3, name: "Glute Bridge March", file: "3-glute-bridge.png", muscles: "Gluteus Maximus, Hamstrings" },
+          { id: 4, name: "Bird Dog", file: "4-bird-dog.png", muscles: "Erector Spinae, Glutes, Core" },
+          { id: 5, name: "Forearm Plank", file: "5-forearm-plank.png", muscles: "Transverse Abdominis, Core Wall" },
+          { id: 6, name: "Bicycle Crunches", file: "6-bicycle-crunches.png", muscles: "Obliques, Rectus Abdominis" },
+          { id: 7, name: "Flutter Kicks", file: "7-flutter-kicks.png", muscles: "Lower Abs, Hip Flexors" },
+          { id: 8, name: "Heel Taps", file: "8-heel-taps.png", muscles: "Obliques, Abdominal Wall" },
+          { id: 9, name: "Hand Release Push-ups", file: "9-pushups.png", muscles: "Pectoralis Major, Triceps, Deltoids" },
+          { id: 10, name: "Hollow Hold", file: "10-hollow-hold.png", muscles: "Rectus Abdominis, Quads" },
+          { id: 11, name: "High Plank Shoulder Taps", file: "11-shoulder-taps.png", muscles: "Shoulder Stabilizers, Core" },
+          { id: 12, name: "Reverse Crunches", file: "12-reverse-crunches.png", muscles: "Lower Abdominals, Hip Flexors" },
+          { id: 13, name: "Side Plank Left & Right", file: "13-side-plank.png", muscles: "Lateral Obliques, Stabilizers" },
+          { id: 14, name: "Plank Hold", file: "14-plank-hold.png", muscles: "Total Core, Serratus, Quads" }
+        ]
+      },
+      {
+        id: "kb-calisthenics-8",
+        title: "Kettlebell & Calisthenics Routine (8 Exercises)",
+        workDuration: 60,
+        restDuration: 20,
+        exercises: [
+          { id: 1, name: "Weighted Pull-Up", file: "1-weighted-pullup.png", muscles: "Latissimus Dorsi, Biceps, Core" },
+          { id: 2, name: "Weighted Dip", file: "2-weighted-dip.png", muscles: "Pectoralis Major, Triceps, Deltoids" },
+          { id: 3, name: "Double KB Front Squat", file: "3-double-kb-squat.png", muscles: "Quadriceps, Glutes, Core Bracing" },
+          { id: 4, name: "KB Bulgarian Split Squat", file: "4-kb-split-squat.png", muscles: "Gluteus Medius, Quads, Hamstrings" },
+          { id: 5, name: "Double Kettlebell Swing", file: "5-double-kb-swing.png", muscles: "Hamstrings, Gluteus Maximus, Lower Back" },
+          { id: 6, name: "Kettlebell Clean & Press", file: "6-kb-clean-press.png", muscles: "Deltoids, Trapezius, Core Stabilizers" },
+          { id: 7, name: "Kettlebell Snatch", file: "7-kb-snatch.png", muscles: "Posterior Chain, Shoulders, Grip" },
+          { id: 8, name: "KB Russian Twist / Halo", file: "8-kb-rotational-core.png", muscles: "Transverse Abdominis, Obliques" }
+        ]
+      }
+    ];
+
+    let currentRoutineIdx = 0;
+    let currentExIdx = 0;
+    let isWork = true;
+    let timeLeft = 60;
+    let isRunning = false;
+    let timer = null;
+    let audioOn = true;
+
+    // Web Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(freq, duration) {
+      if (!audioOn) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function toggleAudio() {
+      audioOn = !audioOn;
+      document.getElementById('audio-icon').className = audioOn ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark text-red-400";
+    }
+
+    // Populate Selector Dropdown
+    const selectEl = document.getElementById("routine-select");
+    workoutRoutines.forEach((routine, idx) => {
+      const opt = document.createElement("option");
+      opt.value = idx;
+      opt.textContent = routine.title;
+      selectEl.appendChild(opt);
+    });
+
+    function switchRoutine(idx) {
+      clearInterval(timer);
+      isRunning = false;
+      currentRoutineIdx = parseInt(idx);
+      currentExIdx = 0;
+      isWork = true;
+      timeLeft = workoutRoutines[currentRoutineIdx].workDuration;
+      buildExerciseList();
+      updateUI();
+    }
+
+    function buildExerciseList() {
+      const routine = workoutRoutines[currentRoutineIdx];
+      const listEl = document.getElementById("exercise-list");
+      listEl.innerHTML = "";
+
+      // Header summary
+      document.getElementById("header-stats").innerText = `${routine.exercises.length} Movements • ${routine.workDuration}s Work / ${routine.restDuration}s Rest`;
+      const totalSec = (routine.workDuration + routine.restDuration) * routine.exercises.length - routine.restDuration;
+      const totalMin = Math.floor(totalSec / 60);
+      const remSec = totalSec % 60;
+      document.getElementById("routine-total-duration").innerText = `Total: ${totalMin}m ${remSec}s`;
+
+      routine.exercises.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.id = `item-${index}`;
+        card.className = "flex items-center gap-3 p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition";
+        card.onclick = () => selectExercise(index);
+        card.innerHTML = `
+          <div class="w-14 aspect-[16/10] bg-white rounded-lg overflow-hidden flex items-center justify-center p-0.5 border border-slate-700 flex-shrink-0">
+            <img src="${item.file}" class="w-full h-full object-contain" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 60\\'><rect width=\\'100\\' height=\\'60\\' fill=\\'%23f3f4f6\\'/><text x=\\'50\\' y=\\'35\\' text-anchor=\\'middle\\' font-size=\\'10\\' fill=\\'%2394a3b8\\'>3D Image</text></svg>'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-xs font-bold text-white truncate font-display">${item.id}. ${item.name}</h4>
+            <p class="text-[10px] text-slate-400 truncate mt-0.5">${item.muscles}</p>
+          </div>
+          <span class="text-[10px] font-bold text-slate-500 font-display">${routine.workDuration}s</span>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    function selectExercise(idx) {
+      clearInterval(timer);
+      isRunning = false;
+      currentExIdx = idx;
+      isWork = true;
+      timeLeft = workoutRoutines[currentRoutineIdx].workDuration;
+      updateUI();
+    }
+
+    function togglePlay() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (isRunning) {
+        clearInterval(timer);
+        isRunning = false;
+      } else {
+        isRunning = true;
+        timer = setInterval(tick, 1000);
+      }
+      updateUI();
+    }
+
+    function tick() {
+      const routine = workoutRoutines[currentRoutineIdx];
+      if (timeLeft > 0) {
+        timeLeft--;
+        if (timeLeft <= 3 && timeLeft > 0) beep(580, 0.1);
+      } else {
+        beep(880, 0.4);
+        if (isWork) {
+          isWork = false;
+          timeLeft = routine.restDuration;
+        } else {
+          isWork = true;
+          timeLeft = routine.workDuration;
+          currentExIdx = (currentExIdx + 1) % routine.exercises.length;
+        }
+      }
+      updateUI();
+    }
+
+    function prevEx() {
+      const routine = workoutRoutines[currentRoutineIdx];
+      currentExIdx = (currentExIdx - 1 + routine.exercises.length) % routine.exercises.length;
+      selectExercise(currentExIdx);
+    }
+
+    function nextEx() {
+      const routine = workoutRoutines[currentRoutineIdx];
+      currentExIdx = (currentExIdx + 1) % routine.exercises.length;
+      selectExercise(currentExIdx);
+    }
+
+    function updateUI() {
+      const routine = workoutRoutines[currentRoutineIdx];
+      const cur = routine.exercises[currentExIdx];
+      const next = routine.exercises[(currentExIdx + 1) % routine.exercises.length];
+
+      document.getElementById("main-title").innerText = `${cur.id}. ${cur.name}`;
+      document.getElementById("main-muscles").innerText = `Target: ${cur.muscles}`;
+      document.getElementById("main-img").src = cur.file;
+      document.getElementById("counter-badge").innerText = `${currentExIdx + 1} / ${routine.exercises.length}`;
+
+      const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+      const s = String(timeLeft % 60).padStart(2, '0');
+      document.getElementById("timer-text").innerText = `${m}:${s}`;
+
+      const total = isWork ? routine.workDuration : routine.restDuration;
+      const progress = (timeLeft / total) * 100;
+      const c = 2 * Math.PI * 24;
+      document.getElementById("ring-progress").style.strokeDashoffset = c - (progress / 100) * c;
+      document.getElementById("ring-progress").style.stroke = isWork ? "#ef4444" : "#10b981";
+      document.getElementById("ring-text").innerText = `${Math.ceil(progress)}%`;
+
+      const hud = document.getElementById("rest-hud");
+      const badge = document.getElementById("phase-badge");
+      if (isWork) {
+        badge.innerText = "Work Phase";
+        badge.className = "font-bold tracking-wider uppercase text-red-500 font-display";
+        hud.classList.add("hidden");
+      } else {
+        badge.innerText = "Rest Interval";
+        badge.className = "font-bold tracking-wider uppercase text-emerald-400 font-display";
+        document.getElementById("up-next-title").innerText = `Up Next: ${next.name}`;
+        document.getElementById("up-next-muscles").innerText = `Target: ${next.muscles}`;
+        hud.classList.remove("hidden");
+      }
+
+      document.getElementById("play-icon").className = isRunning ? "fa-solid fa-pause text-xl" : "fa-solid fa-play ml-0.5 text-xl";
+      document.getElementById("play-btn").className = isRunning
+        ? "w-14 h-14 rounded-full bg-amber-600 hover:bg-amber-500 flex items-center justify-center text-white text-xl shadow-lg shadow-amber-950"
+        : "w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-white text-xl shadow-lg shadow-red-950";
+
+      routine.exercises.forEach((_, i) => {
+        const item = document.getElementById(`item-${i}`);
+        if (item) {
+          item.className = (i === currentExIdx)
+            ? "flex items-center gap-3 p-2.5 rounded-xl bg-red-950/30 border border-red-700/80 transition"
+            : "flex items-center gap-3 p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 transition";
+        }
+      });
+    }
+
+    // Init App
+    buildExerciseList();
+    selectExercise(0);
+  </script>
+</body>
+</html>
