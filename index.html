@@ -19,8 +19,8 @@
   <header class="px-5 py-4 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20 space-y-3">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="font-display font-bold text-lg text-white tracking-tight">KineCore Athlete</h1>
-        <p class="text-[10px] tracking-widest text-slate-500 uppercase font-semibold" id="header-stats">14 Movements • 60s Work / 20s Rest</p>
+        <h1 class="font-display font-bold text-lg text-white tracking-tight">Discipline Athlete</h1>
+        <p class="text-[10px] tracking-widest text-slate-500 uppercase font-semibold" id="header-stats">Loading Routine...</p>
       </div>
       <button onclick="toggleAudio()" id="audio-btn" class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
         <i class="fa-solid fa-volume-high" id="audio-icon"></i>
@@ -104,7 +104,7 @@
   </main>
 
   <script>
-    // Expandable workout registry: Add future routines here
+    // EXPANDABLE WORKOUT REGISTRY - Add any future routines here
     const workoutRoutines = [
       {
         id: "core-14",
@@ -145,14 +145,16 @@
         ]
       },
       {
-  id: "mobility-routine",
-  title: "Morning Mobility (5 Exercises)",
-  workDuration: 45,
-  restDuration: 15,
-  exercises: [
-    { id: 1, name: "World's Greatest Stretch", file: "mobility-1.png", muscles: "Hip Flexors, Thoracic Spine" },
-  ]
-},
+        id: "future-workout-placeholder",
+        title: "Future Routine [Add Yours Here]",
+        workDuration: 45,
+        restDuration: 15,
+        exercises: [
+          { id: 1, name: "Morning Mobility", file: "default-mobility.png", muscles: "Hip Flexors, Spine Mobilizers" },
+          { id: 2, name: "Bodyweight Lunges", file: "default-lunges.png", muscles: "Quadriceps, Glutes" },
+          { id: 3, name: "T-Spine Rotation", file: "default-rotations.png", muscles: "Thoracic Spine, Shoulders" }
+        ]
+      }
     ];
 
     let currentRoutineIdx = 0;
@@ -344,4 +346,5 @@
     selectExercise(0);
   </script>
 </body>
+</html>
 </html>
